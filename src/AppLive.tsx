@@ -53,6 +53,8 @@ function Overview() {
     { label: '赢单率', value: '34.8%', change: '+4.2 pt', note: '本季度已关闭商机', to: '/details/winrate', trend: 'up' },
     { label: '企业客户', value: '248', change: '+16', note: '本月新增企业 · 演示数据', to: '/details/companies', trend: 'up' },
     { label: '联系人', value: '1,426', change: '+64', note: '本月新增联系人 · 演示数据', to: '/details/contacts', trend: 'up' },
+    { label: '平均成交周期', value: '28 天', change: '-3 天', note: '从建档到赢单的平均天数', to: '/details/winrate', trend: 'up' },
+    { label: '待跟进线索', value: '12', change: '4 项高优先级', note: '超过 3 天未联系的客户', to: '/details/followups', trend: 'up' },
   ];
   const stages = [
     { name: '初步接洽', count: 42, amount: '¥ 1.26M', width: '100%', color: '#a6c8ff' },
