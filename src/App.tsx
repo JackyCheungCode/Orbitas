@@ -197,6 +197,13 @@ function App() {
       </SideNav>
       <Content className="main-content">
         <div className="mobile-page-bar"><span>{currentTitle}</span><span className="mobile-workspace-dot">O</span></div>
+        <nav className="mobile-nav" aria-label="Mobile navigation">
+          {navigation.map(({ label, path }) => (
+            <a key={path} href={path} aria-current={location.pathname === path ? 'page' : undefined}>
+              {label}
+            </a>
+          ))}
+        </nav>
         <div className="main-content-inner">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
