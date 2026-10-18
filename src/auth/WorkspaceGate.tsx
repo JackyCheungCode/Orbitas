@@ -177,7 +177,7 @@ export default function WorkspaceGate({ children }: { children: ReactNode }) {
             <TextInput id="organization-name" labelText="Workspace name" placeholder="Acme Sales" value={organizationName} onChange={(event) => setOrganizationName(event.target.value)} required />
             <Button type="submit" disabled={busy} className="auth-submit">{busy ? 'Creating…' : 'Create workspace'}</Button>
           </form>
-          <Button kind="ghost" onClick={() => { void supabase.auth.signOut(); }}>Sign out</Button>
+          <Button kind="ghost" onClick={() => { if (supabase) void supabase.auth.signOut(); }}>Sign out</Button>
         </Tile>
       </div>
     );
