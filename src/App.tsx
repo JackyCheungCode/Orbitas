@@ -27,7 +27,7 @@ import {
   Tag,
   Tile,
 } from '@carbon/react';
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 
 type Prospect = {
   name: string;
@@ -188,7 +188,7 @@ function App() {
         <SideNavItems>
           <div className="nav-section-label">WORKSPACE</div>
           {navigation.map(({ label, path, icon: Icon }) => (
-            <SideNavLink key={path} as={NavLink} to={path} isActive={location.pathname === path} renderIcon={Icon}>
+            <SideNavLink key={path} href={path} isActive={location.pathname === path} renderIcon={Icon}>
               {label}
             </SideNavLink>
           ))}
