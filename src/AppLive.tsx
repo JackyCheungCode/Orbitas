@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Activity, Building, Dashboard, DataBase, Settings, UserMultiple, UserAvatar } from '@carbon/icons-react';
 import { Button, Column, Content, Grid, Header, HeaderGlobalAction, HeaderGlobalBar, HeaderName, Select, SelectItem, SideNav, SideNavItems, SideNavLink, Tag, Tile } from '@carbon/react';
 import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom';
@@ -46,28 +46,13 @@ const detailData: Record<string, { title: string; subtitle: string; columns: str
 function Overview() {
   const { organization } = useWorkspace();
   const [period, setPeriod] = useState('quarter');
-  const [liveCounts, setLiveCounts] = useState<{ companies: number | null; contacts: number | null }>({ companies: null, contacts: null });
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      if (!supabase) return;
-      const [companies, contacts] = await Promise.all([
-        supabase.from('companies').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id),
-        supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id),
-      ]);
-      if (active) setLiveCounts({ companies: companies.count ?? 0, contacts: contacts.count ?? 0 });
-    }
-    void load();
-    return () => { active = false; };
-  }, [organization.id]);
-
   const kpis = [
     { label: '销售收入', value: '¥ 2.86M', change: '+18.6%', note: '已签约合同金额', to: '/details/revenue', trend: 'up' },
     { label: '销售管道', value: '¥ 8.42M', change: '+12.4%', note: '开放商机总金额', to: '/details/pipeline', trend: 'up' },
     { label: '预计成交额', value: '¥ 3.18M', change: '+8.2%', note: '按赢单概率加权', to: '/details/forecast', trend: 'up' },
     { label: '赢单率', value: '34.8%', change: '+4.2 pt', note: '本季度已关闭商机', to: '/details/winrate', trend: 'up' },
-    { label: '企业客户', value: (liveCounts.companies ?? 248).toLocaleString(), change: '+16', note: liveCounts.companies === null ? '本月新增企业 · 演示数据' : '当前工作空间企业档案', to: '/details/companies', trend: 'up' },
-    { label: '联系人', value: (liveCounts.contacts ?? 1_426).toLocaleString(), change: '+64', note: liveCounts.contacts === null ? '本月新增联系人 · 演示数据' : '当前工作空间联系人档案', to: '/details/contacts', trend: 'up' },
+    { label: '企业客户', value: '248', change: '+16', note: '本月新增企业 · 演示数据', to: '/details/companies', trend: 'up' },
+    { label: '联系人', value: '1,426', change: '+64', note: '本月新增联系人 · 演示数据', to: '/details/contacts', trend: 'up' },
   ];
   const stages = [
     { name: '初步接洽', count: 42, amount: '¥ 1.26M', width: '100%', color: '#a6c8ff' },
@@ -150,7 +135,7 @@ function Overview() {
         </section>
       </Column>
     </Grid>
-    <div className="dashboard-disclaimer">演示环境 · 经营指标、销售记录和团队数据均为虚拟样例；企业及联系人数量在已连接 Supabase 时读取当前工作空间数据。</div>
+    <div className="dashboard-disclaimer">演示环境 · 首页经营指标、销售记录、企业客户、联系人及团队数据均为虚拟样例，不代表真实经营结果。</div>
   </div>;
 }
 
