@@ -1,6 +1,19 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { Button, InlineNotification, TextInput } from '@carbon/react';
-import { Add } from '@carbon/icons-react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import {
+  Button,
+  DataTable,
+  InlineNotification,
+  Search,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TextInput,
+} from '@carbon/react';
+import { Add, Renew } from '@carbon/icons-react';
 import { useWorkspace } from '../auth/WorkspaceGate';
 import { supabase } from '../lib/supabase';
 
@@ -26,15 +39,25 @@ export default function LiveRecordsPage({ resource, title, description }: { reso
   const fields = fieldSets[resource];
   const [records, setRecords] = useState<RecordRow[]>([]);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
   async function loadRecords() {
-    if (!supabase) return;
+    if (!supabase) {
+      setLoading(false);
+      setError('Supabase is not configured. Set the VITE_SUPABASE_URL and publishable key environment variables.');
+      return;
+    }
     setLoading(true);
-    const { data, error: requestError } = await supabase.from(resource).select('*').eq('organization_id', organization.id).order('created_at', { ascending: false }).limit(200);
+    const { data, error: requestError } = await supabase
+      .from(resource)
+      .select('*')
+      .eq('organization_id', organization.id)
+      .order('created_at', { ascending: false })
+      .limit(200);
     if (requestError) setError(requestError.message);
     else {
       setRecords((data ?? []) as RecordRow[]);
@@ -43,11 +66,17 @@ export default function LiveRecordsPage({ resource, title, description }: { reso
     setLoading(false);
   }
 
-  useEffect(() => { void loadRecords(); }, [organization.id, resource]);
+  useEffect(() => {
+    void loadRecords();
+    // The resource and active workspace define the current query.
+  }, [organization.id, resource]);
 
   async function addRecord(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase) return;
+    if (!supabase) {
+      setError('Supabase is not configured.');
+      return;
+    }
     setSaving(true);
     setError('');
     setNotice('');
@@ -63,14 +92,44 @@ export default function LiveRecordsPage({ resource, title, description }: { reso
     setSaving(false);
   }
 
+  const headers = useMemo(
+    () => [
+      ...fields.map((field) => ({ key: field.key, header: field.label })),
+      { key: 'created_at', header: 'Created' },
+    ],
+    [fields],
+  );
+
+  const rows = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    return records
+      .filter((record) => !query || fields.some(({ key }) => String(record[key] ?? '').toLocaleLowerCase().includes(query)))
+      .map((record, index) => ({
+        id: String(record.id ?? index),
+        ...Object.fromEntries(fields.map(({ key }) => [key, String(record[key] ?? '—')])),
+        created_at: record.created_at ? new Date(String(record.created_at)).toLocaleDateString() : '—',
+      }));
+  }, [fields, records, search]);
+
   return (
     <div className="page">
       <div className="page-heading">
-        <div><div className="eyebrow">WORKSPACE / DIRECTORY</div><h1>{title}</h1><p className="page-description">{description}</p></div>
+        <div>
+          <div className="eyebrow">WORKSPACE / DIRECTORY</div>
+          <h1>{title}</h1>
+          <p className="page-description">{description}</p>
+        </div>
+        <Button kind="tertiary" renderIcon={Renew} onClick={() => void loadRecords()} disabled={loading}>
+          Refresh
+        </Button>
       </div>
+
       <section className="content-section">
         <div className="section-heading">
-          <div><h2>Add {resource === 'companies' ? 'a company' : 'a contact'}</h2><p>Records are saved to {organization.name} and protected by organization-level RLS.</p></div>
+          <div>
+            <h2>Add {resource === 'companies' ? 'a company' : 'a contact'}</h2>
+            <p>Records are saved to {organization.name} and protected by organization-level RLS.</p>
+          </div>
         </div>
         <form className="record-create-form" onSubmit={addRecord}>
           {fields.map((field) => (
@@ -86,28 +145,66 @@ export default function LiveRecordsPage({ resource, title, description }: { reso
           ))}
           <Button type="submit" renderIcon={Add} disabled={saving}>{saving ? 'Saving…' : 'Save record'}</Button>
         </form>
+
         {error && <InlineNotification lowContrast kind="error" title="Request failed" subtitle={error} hideCloseButton />}
         {notice && <InlineNotification lowContrast kind="success" title="Saved" subtitle={notice} hideCloseButton />}
+
         <div className="section-heading">
-          <div><h2>{title}</h2><p>Live records from Supabase.</p></div>
-          <Button kind="ghost" onClick={() => void loadRecords()} disabled={loading}>Refresh</Button>
+          <div>
+            <h2>{title}</h2>
+            <p>{loading ? 'Loading records from Supabase…' : `${rows.length} records shown`}</p>
+          </div>
         </div>
-        <div className="table-scroll">
-          <table className="prospect-table">
-            <thead><tr>{fields.map((field) => <th key={field.key}>{field.label}</th>)}<th>Created</th></tr></thead>
-            <tbody>
-              {records.map((record, index) => (
-                <tr key={String(record.id ?? index)}>
-                  {fields.map((field) => <td key={field.key}>{String(record[field.key] ?? '—')}</td>)}
-                  <td>{record.created_at ? new Date(String(record.created_at)).toLocaleDateString() : '—'}</td>
-                </tr>
-              ))}
-              {!loading && records.length === 0 && <tr><td className="empty-cell" colSpan={fields.length + 1}>No records yet. Use the form above to add the first one.</td></tr>}
-              {loading && <tr><td className="empty-cell" colSpan={fields.length + 1}>Loading records…</td></tr>}
-            </tbody>
-          </table>
+        <div className="table-toolbar">
+          <Search
+            size="lg"
+            labelText={`Search ${title.toLocaleLowerCase()}`}
+            placeholder={`Search ${title.toLocaleLowerCase()}`}
+            value={search}
+            onChange={(event) => setSearch(event.currentTarget.value)}
+          />
+          <span className="result-count">{rows.length} of {records.length} records</span>
         </div>
-        <div className="table-footer"><span>{records.length} records loaded</span><span>Workspace: {organization.name}</span></div>
+        <DataTable rows={rows} headers={headers}>
+          {({ rows: tableRows, headers: tableHeaders, getHeaderProps, getRowProps, getTableProps }) => (
+            <TableContainer>
+              <Table {...getTableProps()} aria-label={title}>
+                <TableHead>
+                  <TableRow>
+                    {tableHeaders.map((header) => (
+                      <TableHeader {...getHeaderProps({ header })} key={header.key}>
+                        {header.header}
+                      </TableHeader>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tableRows.map((row) => (
+                    <TableRow {...getRowProps({ row })} key={row.id}>
+                      {row.cells.map((cell) => <TableCell key={cell.id}>{String(cell.value ?? '—')}</TableCell>)}
+                    </TableRow>
+                  ))}
+                  {!loading && tableRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={headers.length} className="empty-cell">
+                        {records.length === 0 ? 'No records yet. Use the form above to add the first one.' : 'No records match this search.'}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={headers.length} className="empty-cell">Loading records…</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DataTable>
+        <div className="table-footer">
+          <span>{records.length} records loaded</span>
+          <span>Workspace: {organization.name}</span>
+        </div>
       </section>
     </div>
   );
