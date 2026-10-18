@@ -91,8 +91,15 @@ button, input { font: inherit; }
 .app-footer { display: flex; justify-content: space-between; gap: 1rem; color: #8d8d8d; font-size: .6875rem; padding-top: 2rem; }
 
 @media (max-width: 1055px) {
-  .main-content { margin-left: 16rem; }
-  .main-content-inner { padding: 1.5rem; }
+  /* Collapse the fixed desktop sidebar before it squeezes tablet/mobile content. */
+  .cds--side-nav { display: none; }
+  .main-content { margin-left: 0; width: 100%; min-width: 0; }
+  .main-content-inner { width: 100%; max-width: none; padding: 1.5rem; }
+  .mobile-page-bar { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem; background: #fff; border-bottom: 1px solid #e0e0e0; font-size: .8125rem; font-weight: 600; }
+  .mobile-nav { display: flex; gap: .25rem; overflow-x: auto; padding: .5rem 1rem 0; background: #fff; border-bottom: 1px solid #e0e0e0; scrollbar-width: thin; }
+  .mobile-nav a { flex: 0 0 auto; color: #525252; text-decoration: none; font-size: .75rem; padding: .5rem .75rem .65rem; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .mobile-nav a[aria-current='page'] { color: #0f62fe; border-bottom-color: #0f62fe; font-weight: 600; }
+  .mobile-workspace-dot { width: 1.75rem; height: 1.75rem; font-size: .75rem; }
   .metrics-grid .cds--col { flex: 0 0 50%; max-width: 50%; }
 }
 @media (max-width: 671px) {
